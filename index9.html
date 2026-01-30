@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>うちゅうひらがなかーど</title>
+
+<style>
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:radial-gradient(circle at top,#3b1d6b 0%,#1b0f3a 40%,#09001a 100%);
+}
+.container{padding:20px}
+
+/* 白カード */
+.main{
+  text-align:center;
+  padding:20px;
+  background:rgba(255,255,255,.95);
+  border-radius:24px;
+  max-width:960px;
+  margin:0 auto 10px auto;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+
+.app-title{font-size:28px;font-weight:bold}
+.howto{font-size:16px;margin-top:6px}
+.score{font-size:20px;margin-bottom:10px}
+
+h1{font-size:28px;margin:10px 0}
+
+.choices{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+
+/* 問題カード */
+.image-card{
+  width:160px;
+  height:200px;
+  border-radius:20px;
+  border:4px solid #d4b6ff;
+  background:#fff;
+  margin:10px;
+  cursor:pointer;
+  box-shadow:0 6px 12px rgba(0,0,0,.25);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.image-card img{
+  max-width:100%;
+  max-height:100%;
+  border-radius:12px;
+}
+.image-card.correct{
+  border-color:gold;
+  animation:glow .8s ease-in-out infinite alternate;
+}
+@keyframes glow{
+  from{box-shadow:0 0 10px rgba(255,215,0,.6)}
+  to{box-shadow:0 0 30px rgba(255,215,0,1)}
+}
+
+/* ⭐ 星（毎問） */
+.star-area{
+  max-width:960px;
+  margin:0 auto;
+  min-height:36px;
+  padding:6px;
+  font-size:26px;
+  color:#fff59d;
+  text-align:center;
+}
+
+/* 🌍 惑星（節目） */
+.planet-area{
+  max-width:960px;
+  margin:0 auto;
+  min-height:140px;
+  padding:10px;
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:14px;
+}
+.planet-card{
+  width:96px;
+  height:96px;
+  border-radius:50%;
+  background:#fff;
+  border:4px solid #ffd54f;
+  box-shadow:0 0 20px rgba(255,215,0,.9);
+}
+.planet-card img{
+  width:100%;
+  height:100%;
+  border-radius:50%;
+}
+
+/* 🔁 もういちど */
+.restart-btn{
+  margin-top:20px;
+  padding:12px 24px;
+  font-size:20px;
+  border-radius:20px;
+  border:none;
+  background:#ffcc80;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+  <!-- ヘッダー -->
+  <div class="main">
+    <div class="app-title">うちゅうひらがなかーど</div>
+    <div class="howto">
+      あそびかた：しつもんにあう ひらがなの かーどを えらんでね
+    </div>
+  </div>
+
+  <!-- クイズ -->
+  <div class="main">
+    <div class="score" id="score"></div>
+    <h1 id="question"></h1>
+    <div class="choices" id="choices"></div>
+    <button class="restart-btn" id="restartBtn" style="display:none">
+      もういちど あそぶ
+    </button>
+  </div>
+
+  <!-- ⭐ 星 -->
+  <div class="star-area" id="stars"></div>
+
+  <!-- 🌍 惑星 -->
+  <div class="planet-area" id="planetArea"></div>
+
+</div>
+
+<script>
+// ========================
+// データ（あ〜を）
+const data = [
+  {c:"あ",q:"あまのがわ",img:"image/amanoj.png"},
+  {c:"い",q:"いんせき",img:"image/inseki.png"},
+  {c:"う",q:"うちゅう",img:"image/uchuu.png"},
+  {c:"え",q:"えいせい",img:"image/eisei.png"},
+  {c:"お",q:"おりおんざ",img:"image/orion.png"},
+  {c:"か",q:"かせい",img:"image/kasei.png"},
+  {c:"き",q:"きんせい",img:"image/kinsei.png"},
+  {c:"く",q:"くるくる ぎんが",img:"image/kurukuru.png"},
+  {c:"け",q:"けれす",img:"image/ceres.png"},
+  {c:"こ",q:"ことざ",img:"image/koto.png"},
+  {c:"さ",q:"さたーん",img:"image/saturn.png"},
+  {c:"し",q:"しりうす",img:"image/sirius.png"},
+  {c:"す",q:"すいせい",img:"image/suisei.png"},
+  {c:"せ",q:"せいざ",img:"image/seiza.png"},
+  {c:"そ",q:"そらの ほし",img:"image/sorano.png"},
+  {c:"た",q:"たいよう",img:"image/taiyou.png"},
+  {c:"ち",q:"ちきゅう",img:"image/chikyuu.png"},
+  {c:"つ",q:"つき",img:"image/tsuki.png"},
+  {c:"て",q:"てんのうせい",img:"image/tennou.png"},
+  {c:"と",q:"とおいほし",img:"image/toihoshi.png"},
+  {c:"な",q:"ながれぼし",img:"image/nagare.png"},
+  {c:"に",q:"にじいろ うちゅう",img:"image/nijiiro.png"},
+  {c:"ぬ",q:"ぬいぐるみ せいじん",img:"image/nuigurumi.png"},
+  {c:"ね",q:"ねぷちゅーん",img:"image/neputun.png"},
+  {c:"の",q:"のーす すたー",img:"image/northstar.png"},
+  {c:"は",q:"はうめあ",img:"image/haumea.png"},
+  {c:"ひ",q:"ひかる ほし",img:"image/hikaru.png"},
+  {c:"ふ",q:"ふわふわ うちゅう",img:"image/fuwa.png"},
+  {c:"へ",q:"へんしん ろけっと",img:"image/henshin.png"},
+  {c:"ほ",q:"ほくとしちせい",img:"image/hokuto.png"},
+  {c:"ま",q:"まけまけ",img:"image/makemake.png"},
+  {c:"み",q:"みかづき",img:"image/mikazuki.png"},
+  {c:"む",q:"むげんの うちゅう",img:"image/mugen.png"},
+  {c:"め",q:"めいおうせい",img:"image/meiou.png"},
+  {c:"も",q:"もくせい",img:"image/mokusei.png"},
+  {c:"や",q:"やぎざ",img:"image/yagi.png"},
+  {c:"ゆ",q:"ゆーふぉー",img:"image/ufo.png"},
+  {c:"よ",q:"よぞら",img:"image/yozora.png"},
+  {c:"ら",q:"らせん ぎんが",img:"image/rasen.png"},
+  {c:"り",q:"りゅうせいぐん",img:"image/ryuusei.png"},
+  {c:"る",q:"るんるんろけっと",img:"image/runrun.png"},
+  {c:"れ",q:"れいんぼー すたー",img:"image/rainbow.png"},
+  {c:"ろ",q:"ろけっと はっしゃ",img:"image/rocketstart.png"},
+  {c:"わ",q:"わくせい しゅうごう",img:"image/wakusei.png"},
+  {c:"を",q:"たいようけいを たびする",img:"image/tabi.png"}
+];
+
+// 🌍 惑星報酬
+const rewardPlanets = [
+  {count:1, img:"image/taiyou.png"},
+  {count:5, img:"image/suisei.png"},
+  {count:10,img:"image/kinsei.png"},
+  {count:15,img:"image/chikyuu.png"},
+  {count:20,img:"image/kasei.png"},
+  {count:25,img:"image/mokusei.png"},
+  {count:30,img:"image/saturn.png"},
+  {count:35,img:"image/tennou.png"},
+  {count:40,img:"image/neputun.png"},
+  {count:45,img:"image/meiou.png"}
+];
+
+// 🌟 最後の「ん」
+const tensai = {
+  c:"ん",
+  q:"うちゅうの てんさい！",
+  img:"image/tensai.png"
+};
+
+let shuffled, index, correctCount, finished;
+let shownPlanets = new Set();
+
+function speak(t){
+  const u=new SpeechSynthesisUtterance(t);
+  u.lang="ja-JP";
+  speechSynthesis.speak(u);
+}
+
+function updateUI(){
+  document.getElementById("score").textContent =
+    `せいかい：${correctCount} / ${shuffled.length}`;
+  document.getElementById("stars").textContent =
+    "☆".repeat(correctCount);
+
+  const area=document.getElementById("planetArea");
+  rewardPlanets.forEach(p=>{
+    if(correctCount>=p.count && !shownPlanets.has(p.count)){
+      const card=document.createElement("div");
+      card.className="planet-card";
+      card.innerHTML=`<img src="${p.img}">`;
+      area.appendChild(card);
+      shownPlanets.add(p.count);
+    }
+  });
+}
+
+function newQuestion(){
+  const choices=document.getElementById("choices");
+  choices.innerHTML="";
+  updateUI();
+
+  if(index>=shuffled.length){
+    if(finished) return;
+    finished=true;
+    document.getElementById("question").textContent=tensai.q;
+    speak("すごい！うちゅうのてんさい！");
+    const card=document.createElement("div");
+    card.className="image-card correct";
+    card.innerHTML=`<img src="${tensai.img}">`;
+    choices.appendChild(card);
+    document.getElementById("restartBtn").style.display="inline-block";
+    return;
+  }
+
+  const current=shuffled[index++];
+  document.getElementById("question").textContent =
+    `${current.q} の「${current.c}」は どれかな？`;
+  speak(`${current.q} の ${current.c}`);
+
+  const pool=[current];
+  while(pool.length<3){
+    const r=data[Math.floor(Math.random()*data.length)];
+    if(!pool.includes(r)) pool.push(r);
+  }
+
+  pool.sort(()=>Math.random()-.5).forEach(item=>{
+    const card=document.createElement("div");
+    card.className="image-card";
+    card.innerHTML=`<img src="${item.img}">`;
+    card.onclick=()=>{
+      if(item===current){
+        correctCount++;
+        card.classList.add("correct");
+        speak("せいかい");
+        setTimeout(newQuestion,1200);
+      }else{
+        speak("ざんねん");
+      }
+    };
+    choices.appendChild(card);
+  });
+}
+
+function resetGame(){
+  shuffled=[...data].sort(()=>Math.random()-.5);
+  index=0;
+  correctCount=0;
+  finished=false;
+  shownPlanets.clear();
+  document.getElementById("planetArea").innerHTML="";
+  document.getElementById("stars").textContent="";
+  document.getElementById("restartBtn").style.display="none";
+  newQuestion();
+}
+
+document.getElementById("restartBtn").onclick=resetGame;
+resetGame();
+</script>
+
+</body>
+</html>
