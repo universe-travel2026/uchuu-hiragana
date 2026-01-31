@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>うちゅうひらがなかるた</title>
+
+<style>
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:radial-gradient(circle at top,#3b1d6b 0%,#1b0f3a 40%,#09001a 100%);
+  color:white;
+}
+.container{display:flex;padding:20px}
+
+/* 惑星（CPU） */
+.cpu-area{
+  width:220px;
+  text-align:center;
+  margin-right:20px;
+}
+.cpu-area img{width:140px}
+.cpu-talk{
+  margin-top:10px;
+  font-size:16px;
+  background:rgba(255,255,255,.15);
+  border-radius:12px;
+  padding:10px;
+  line-height:1.4;
+}
+
+/* 🌟 てんさいカード */
+.tensai-card{
+  margin-top:12px;
+}
+.tensai-card img{
+  width:120px;
+  border-radius:16px;
+  box-shadow:0 0 20px gold;
+}
+
+/* メイン */
+.main{flex:1;text-align:center}
+h1{margin:0}
+.howto{font-size:16px;margin:6px 0 12px}
+.score{font-size:20px;margin-bottom:10px}
+#question{font-size:24px;margin:10px 0}
+
+/* カード */
+.cards{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:20px;
+  justify-items:center;
+  margin-top:20px;
+}
+.card{
+  width:140px;height:180px;
+  background:white;
+  border-radius:20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  box-shadow:0 6px 12px rgba(0,0,0,.4);
+}
+.card img{
+  max-width:100%;
+  max-height:100%;
+  border-radius:12px
+}
+
+/* 🌈 ボーナスカード（2点） */
+.card.bonus{
+  background:#fff1f1;
+  border:4px solid #ff5252;
+  box-shadow:0 0 20px #ff5252;
+}
+
+/* ボタン */
+.buttons{margin-top:20px}
+button{
+  font-size:20px;
+  padding:10px 24px;
+  border-radius:20px;
+  border:none;
+  cursor:pointer;
+}
+.start-btn{background:#aed581}
+.next-btn{background:#ffcc80}
+.retry-btn{background:#90caf9}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+  <!-- 惑星（CPU） -->
+  <div class="cpu-area">
+    <img id="cpuImg">
+    <div class="cpu-talk" id="cpuTalk"></div>
+  </div>
+
+  <!-- メイン -->
+  <div class="main">
+    <h1>うちゅうひらがなかるた</h1>
+    <div class="howto" id="howto"></div>
+    <div class="score" id="score"></div>
+    <div id="question"></div>
+    <div class="cards" id="cards"></div>
+    <div class="buttons" id="buttons"></div>
+  </div>
+
+</div>
+
+<script>
+// =======================
+// カードデータ（あ〜を）
+const data = [
+  {c:"あ",q:"あまのがわ",img:"image/amanoj.png"},
+  {c:"い",q:"いんせき",img:"image/inseki.png"},
+  {c:"う",q:"うちゅう",img:"image/uchuu.png"},
+  {c:"え",q:"えいせい",img:"image/eisei.png"},
+  {c:"お",q:"おりおんざ",img:"image/orion.png"},
+  {c:"か",q:"かせい",img:"image/kasei.png"},
+  {c:"き",q:"きんせい",img:"image/kinsei.png"},
+  {c:"く",q:"くるくる ぎんが",img:"image/kurukuru.png"},
+  {c:"け",q:"けれす",img:"image/ceres.png"},
+  {c:"こ",q:"ことざ",img:"image/koto.png"},
+  {c:"さ",q:"さたーん",img:"image/saturn.png"},
+  {c:"し",q:"しりうす",img:"image/sirius.png"},
+  {c:"す",q:"すいせい",img:"image/suisei.png"},
+  {c:"せ",q:"せいざ",img:"image/seiza.png"},
+  {c:"そ",q:"そらの ほし",img:"image/sorano.png"},
+  {c:"た",q:"たいよう",img:"image/taiyou.png"},
+  {c:"ち",q:"ちきゅう",img:"image/chikyuu.png"},
+  {c:"つ",q:"つき",img:"image/tsuki.png"},
+  {c:"て",q:"てんのうせい",img:"image/tennou.png"},
+  {c:"と",q:"とおいほし",img:"image/toihoshi.png"},
+  {c:"な",q:"ながれぼし",img:"image/nagare.png"},
+  {c:"に",q:"にじいろ うちゅう",img:"image/nijiiro.png"},
+  {c:"ぬ",q:"ぬいぐるみ せいじん",img:"image/nuigurumi.png"},
+  {c:"ね",q:"ねぷちゅーん",img:"image/neputun.png"},
+  {c:"の",q:"のーす すたー",img:"image/northstar.png"},
+  {c:"は",q:"はうめあ",img:"image/haumea.png"},
+  {c:"ひ",q:"ひかる ほし",img:"image/hikaru.png"},
+  {c:"ふ",q:"ふわふわ うちゅう",img:"image/fuwa.png"},
+  {c:"へ",q:"へんしん ろけっと",img:"image/henshin.png"},
+  {c:"ほ",q:"ほくとしちせい",img:"image/hokuto.png"},
+  {c:"ま",q:"まけまけ",img:"image/makemake.png"},
+  {c:"み",q:"みかづき",img:"image/mikazuki.png"},
+  {c:"む",q:"むげんの うちゅう",img:"image/mugen.png"},
+  {c:"め",q:"めいおうせい",img:"image/meiou.png"},
+  {c:"も",q:"もくせい",img:"image/mokusei.png"},
+  {c:"や",q:"やぎざ",img:"image/yagi.png"},
+  {c:"ゆ",q:"ゆーふぉー",img:"image/ufo.png"},
+  {c:"よ",q:"よぞら",img:"image/yozora.png"},
+  {c:"ら",q:"らせん ぎんが",img:"image/rasen.png"},
+  {c:"り",q:"りゅうせいぐん",img:"image/ryuusei.png"},
+  {c:"る",q:"るんるんろけっと",img:"image/runrun.png"},
+  {c:"れ",q:"れいんぼー すたー",img:"image/rainbow.png"},
+  {c:"ろ",q:"ろけっと はっしゃ",img:"image/rocketstart.png"},
+  {c:"わ",q:"わくせい しゅうごう",img:"image/wakusei.png"},
+  {c:"を",q:"たいようけいを たびする",img:"image/tabi.png"}
+];
+
+// =======================
+// ステージ定義（ver1.2.3）
+const stages = [
+  {name:"すいせい", time:6000, rounds:3, cpuImg:"image/suisei.png", bonus:false},
+  {name:"きんせい", time:5000, rounds:4, cpuImg:"image/kinsei.png", bonus:true},
+  {name:"ちきゅう", time:5000, rounds:5, cpuImg:"image/chikyuu.png", bonus:false},
+  {name:"かせい",  time:4000, rounds:6, cpuImg:"image/kasei.png",  bonus:true},
+  {name:"もくせい",time:3500, rounds:7, cpuImg:"image/mokusei.png", bonus:true},
+  {name:"どせい",  time:3200, rounds:7, cpuImg:"image/saturn.png", bonus:true},
+  {name:"てんのうせい",time:2900, rounds:8, cpuImg:"image/tennou.png", bonus:true},
+  {name:"かいおうせい",time:2800, rounds:9, cpuImg:"image/neputun.png", bonus:false},
+  {name:"たいよう",time:2700, rounds:9, cpuImg:"image/taiyou.png", bonus:true}
+];
+
+let stageIndex=0;
+let currentRound=0;
+let playerPoint=0;
+let cpuPoint=0;
+let readQueue=[];
+let bonusChars=[];
+
+// -----------------------
+function speak(t){
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(t);
+  u.lang="ja-JP";
+  speechSynthesis.speak(u);
+}
+
+function showStart(){
+  playerPoint=0;
+  cpuPoint=0;
+  document.getElementById("cpuImg").src="";
+  document.getElementById("cpuTalk").textContent="";
+  document.getElementById("score").textContent="";
+  document.getElementById("question").textContent="";
+  document.getElementById("cards").innerHTML="";
+  document.getElementById("howto").textContent=
+    "あそびかた：よまれた かーどを えらんでね。";
+  document.getElementById("buttons").innerHTML=
+    `<button class="start-btn">▶ はじめる</button>`;
+  document.querySelector(".start-btn").onclick=()=>{
+    stageIndex=0;
+    startStage();
+  };
+}
+
+function startStage(){
+  const stage=stages[stageIndex];
+  playerPoint=0;
+  cpuPoint=0;
+  currentRound=0;
+
+  document.getElementById("cpuImg").src=stage.cpuImg;
+
+  const shuffled=[...data].sort(()=>Math.random()-.5);
+  const field=shuffled.slice(0,stage.rounds*2);
+
+  bonusChars=[];
+  if(stage.bonus){
+    const count =
+      stage.name==="たいよう" ? 2 :
+      stage.name==="かせい"  ? 1 :
+      stage.name==="どせい"  ? 2 : 1;
+
+    bonusChars = field
+      .sort(()=>Math.random()-.5)
+      .slice(0,count)
+      .map(c=>c.c);
+  }
+
+  const cardsArea=document.getElementById("cards");
+  cardsArea.innerHTML="";
+  field.forEach(c=>{
+    const d=document.createElement("div");
+    d.className="card";
+    d.dataset.char=c.c;
+    if(bonusChars.includes(c.c)){
+      d.classList.add("bonus");
+      d.dataset.bonus="true";
+    }
+    d.innerHTML=`<img src="${c.img}">`;
+    cardsArea.appendChild(d);
+  });
+
+  readQueue = field
+    .slice(0,stage.rounds)
+    .sort(()=>Math.random()-.5);
+
+  updateScore();
+  updatePlanetTalk();
+  document.getElementById("buttons").innerHTML="";
+  nextTurn();
+}
+
+function updateScore(){
+  document.getElementById("score").textContent=
+    `😊 あなた：${playerPoint}　🌑 ${stages[stageIndex].name}：${cpuPoint}`;
+}
+
+function updatePlanetTalk(){
+  const stage=stages[stageIndex];
+  const remain=stage.rounds-currentRound;
+  let text="";
+  if(remain>1) text=`あと ${remain}まい だよ！`;
+  else if(remain===1) text="さいごの 1まい だよ！";
+  else text="ぜんぶ とれたね！";
+
+  if(stage.bonus){
+    text+="<br><small>いろのちがう かーどを<br>とると いいことが あるよ</small>";
+  }
+  document.getElementById("cpuTalk").innerHTML=`${stage.name}<br>${text}`;
+}
+
+function nextTurn(){
+  if(readQueue.length===0){
+    finishStage();
+    return;
+  }
+
+  const targetChar=readQueue.shift().c;
+  const target=document.querySelector(`.card[data-char="${targetChar}"]`);
+  const info=data.find(d=>d.c===targetChar);
+
+  document.getElementById("question").textContent=
+    `${info.q} の「${info.c}」は どれかな？`;
+  speak(`${info.q} の ${info.c}`);
+
+  let decided=false;
+  setTimeout(()=>{
+    if(!decided){
+      const p=target.dataset.bonus==="true"?2:1;
+      cpuPoint+=p;
+      currentRound++;
+      updateScore();
+      updatePlanetTalk();
+      nextTurn();
+    }
+  },stages[stageIndex].time);
+
+  document.querySelectorAll(".card").forEach(card=>{
+    card.onclick=()=>{
+      if(decided) return;
+      decided=true;
+      speechSynthesis.cancel();
+      const p=card.dataset.bonus==="true"?2:1;
+      if(card===target) playerPoint+=p;
+      else cpuPoint+=p;
+      currentRound++;
+      updateScore();
+      updatePlanetTalk();
+      nextTurn();
+    };
+  });
+}
+
+function finishStage(){
+  const buttons=document.getElementById("buttons");
+  buttons.innerHTML="";
+  document.getElementById("cpuTalk").innerHTML+="<br><br>また あそぼう！";
+
+  if(playerPoint>cpuPoint){
+
+    if(stages[stageIndex].name==="たいよう"){
+      speak("きみが ゆうしょうだよ");
+      document.getElementById("cpuTalk").innerHTML+=`
+        <br><strong>きみが ゆうしょうだよ！</strong>
+        <div class="tensai-card">
+          <img src="image/tensai.png">
+        </div>`;
+    }else{
+      speak("あなたの かち！");
+    }
+
+    const b=document.createElement("button");
+    b.className="next-btn";
+    if(stageIndex<stages.length-1){
+      b.textContent="つぎのほしへ";
+      b.onclick=()=>{stageIndex++;startStage();};
+    }else{
+      b.textContent="もういちど";
+      b.onclick=showStart;
+    }
+    buttons.appendChild(b);
+
+  }else{
+    speak("あなたの まけ");
+    const b=document.createElement("button");
+    b.className="retry-btn";
+    b.textContent="はじめに";
+    b.onclick=showStart;
+    buttons.appendChild(b);
+  }
+}
+
+// 初期表示
+showStart();
+</script>
+</body>
+</html>
