@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>わくせい かず あそび</title>
+
+<style>
+body {
+  margin:0;
+  font-family:sans-serif;
+  background:#000022;
+  color:white;
+  text-align:center;
+}
+.hidden{display:none;}
+h1{margin:6px 0;}
+
+.howto{
+  font-size:14px;
+  line-height:1.5;
+  padding:10px;
+  background:#111144;
+  margin:0 10px 8px;
+  border-radius:10px;
+}
+
+.stage-list{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  padding:10px;
+}
+.stage-card{
+  background:#222255;
+  border-radius:18px;
+  padding:6px;
+  cursor:pointer;
+}
+.stage-card img{width:120px;height:120px;}
+
+.game-area{
+  display:grid;
+  grid-template-columns:160px 1fr 160px;
+  gap:8px;
+  padding:6px;
+}
+.stage-info{
+  background:#111144;
+  border-radius:14px;
+  padding:6px;
+}
+.stage-info img{width:120px;height:120px;}
+.bubble{
+  background:#222255;
+  border-radius:12px;
+  padding:6px;
+  margin-top:6px;
+  font-size:13px;
+}
+
+.field{
+  display:flex;
+  justify-content:center;
+  gap:32px;
+  margin:10px 0;
+}
+.slot{
+  width:120px;
+  height:120px;
+  border:3px dashed #888;
+  border-radius:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.slot img{width:104px;height:104px;}
+
+.hand{
+  display:grid;
+  grid-template-columns:repeat(5,104px);
+  justify-content:center;
+  gap:12px;
+  padding:12px;
+}
+.card{
+  background:#333366;
+  border-radius:18px;
+  padding:6px;
+  cursor:pointer;
+}
+.card img{width:92px;height:92px;}
+
+.result-box{
+  background:#111144;
+  border-radius:14px;
+  padding:6px;
+}
+.result-box img{width:120px;height:120px;}
+.status{font-size:14px;margin-top:6px;}
+</style>
+</head>
+
+<body>
+
+<div id="stageScreen">
+  <h1>どの ほしで あそぶ？</h1>
+  <div class="howto">
+    すきな ほしを えらんでね<br>
+    ほしが かずを よむよ<br>
+    よんだ すうじと おなじ すうじを えらんでね<br>
+    5もん せいかいしたら くりあ
+  </div>
+  <div class="stage-list" id="stageList"></div>
+</div>
+
+<div id="gameScreen" class="hidden">
+  <h1 id="stageTitle"></h1>
+  <div class="game-area">
+    <div class="stage-info">
+      <img id="stageImg">
+      <div class="bubble">よんだ すうじを<br>えらんでね</div>
+    </div>
+
+    <div>
+      <div class="field">
+        <div class="slot" id="tens"></div>
+        <div class="slot" id="ones"></div>
+      </div>
+      <div class="hand" id="hand"></div>
+    </div>
+
+    <div class="result-box">
+      <img id="resultImg">
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const planets=[
+ {n:0,img:"sun.png"},{n:1,img:"mercury.png"},{n:2,img:"venus.png"},
+ {n:3,img:"earth.png"},{n:4,img:"mars.png"},{n:5,img:"jupiter.png"},
+ {n:6,img:"saturn.png"},{n:7,img:"uranus.png"},{n:8,img:"neptune.png"},
+ {n:9,img:"pluto.png"}
+];
+const stages=[
+ {name:"たいよう",min:0,max:9,img:"sun.png"},
+ {name:"すいせい",min:11,max:19,img:"mercury.png"},
+ {name:"きんせい",min:21,max:29,img:"venus.png"},
+ {name:"ちきゅう",min:31,max:39,img:"earth.png"},
+ {name:"かせい",min:41,max:49,img:"mars.png"},
+ {name:"もくせい",min:51,max:59,img:"jupiter.png"},
+ {name:"どせい",min:61,max:69,img:"saturn.png"},
+ {name:"てんのうせい",min:71,max:79,img:"uranus.png"},
+ {name:"かいおうせい",min:81,max:89,img:"neptune.png"},
+ {name:"めいおうせい",min:91,max:99,img:"pluto.png"},
+ {name:"ぶらっくほーる",min:0,max:99,img:"blackhole.png"}
+];
+
+const stageList=document.getElementById("stageList");
+const stageScreen=document.getElementById("stageScreen");
+const gameScreen=document.getElementById("gameScreen");
+const stageTitle=document.getElementById("stageTitle");
+const stageImg=document.getElementById("stageImg");
+const tensEl=document.getElementById("tens");
+const onesEl=document.getElementById("ones");
+const handEl=document.getElementById("hand");
+const resultImg=document.getElementById("resultImg");
+const statusEl=document.getElementById("status");
+
+let currentStage,answer,input=[],correct=0,total=0,canInput=false;
+
+/* ステージ生成 */
+stages.forEach(s=>{
+ const d=document.createElement("div");
+ d.className="stage-card";
+ d.innerHTML=`<img src="img/${s.img}">`;
+ d.onclick=()=>startStage(s);
+ stageList.appendChild(d);
+});
+
+/* ★ 遊び方読み上げ（安全） */
+setTimeout(()=>{
+  speak("すきなほしをえらんでね。ほしがかずをよむよ。よんだすうじとおなじすうじをえらんでね。ごもんせいかいしたらくりあ。");
+},500);
+
+function startStage(stage){
+ speechSynthesis.cancel();
+ currentStage=stage;
+ correct=0;
+ total=0;
+ stageTitle.textContent=stage.name;
+ stageImg.src=`img/${stage.img}`;
+ stageScreen.classList.add("hidden");
+ gameScreen.classList.remove("hidden");
+ createHand();
+ nextQuestion();
+}
+
+function createHand(){
+ handEl.innerHTML="";
+ planets.forEach(p=>{
+  const c=document.createElement("div");
+  c.className="card";
+  c.innerHTML=`<img src="img/${p.img}">`;
+  c.onclick=()=>selectCard(p.n);
+  handEl.appendChild(c);
+ });
+}
+
+function nextQuestion(){
+ canInput=false;
+ input=[];
+ tensEl.innerHTML="";
+ onesEl.innerHTML="";
+ resultImg.src=`img/${currentStage.img}`;
+ statusEl.textContent=`${total+1} / 5もん`;
+ answer=Math.floor(Math.random()*(currentStage.max-currentStage.min+1))+currentStage.min;
+ if(answer<10) tensEl.innerHTML=`<img src="img/sun.png">`;
+ speakNumber(answer,()=>canInput=true);
+}
+
+function selectCard(num){
+ if(!canInput)return;
+ input.push(num);
+ if(answer<10){
+  onesEl.innerHTML=`<img src="img/${planets[num].img}">`;
+  judge();
+ }else{
+  if(input.length===1)tensEl.innerHTML=`<img src="img/${planets[num].img}">`;
+  if(input.length===2){
+   onesEl.innerHTML=`<img src="img/${planets[num].img}">`;
+   judge();
+  }
+ }
+}
+
+function judge(){
+ canInput=false;
+ total++;
+ const value=answer<10?input[0]:input[0]*10+input[1];
+
+ if(value===answer){
+  correct++;
+  resultImg.src="img/correct.png";
+  speak("せいかい",afterJudge);
+ }else{
+  const t=Math.floor(answer/10),o=answer%10;
+  tensEl.innerHTML=`<img src="img/${planets[t].img}">`;
+  onesEl.innerHTML=`<img src="img/${planets[o].img}">`;
+  resultImg.src="img/zannen.png";
+  speak("ざんねん。せいかいは これだよ",afterJudge);
+ }
+}
+
+function afterJudge(){
+ if(total>=5){
+  if(correct===5){
+   resultImg.src="img/tensai.png";
+   speak("ぜんぶ できたね",endStage);
+  }else{
+   setTimeout(endStage,1000);
+  }
+ }else{
+  nextQuestion();
+ }
+}
+
+function endStage(){
+ gameScreen.classList.add("hidden");
+ stageScreen.classList.remove("hidden");
+}
+
+/* ===== 音声 ===== */
+function speak(text,onEnd){
+ const u=new SpeechSynthesisUtterance(text);
+ u.lang="ja-JP";
+ u.rate=0.85;
+ u.onend=()=>onEnd&&onEnd();
+ speechSynthesis.speak(u);
+}
+function speakNumber(n,onEnd){
+ if(n<10){
+  speak(n===0?"れい":n,onEnd);
+ }else{
+  const t=Math.floor(n/10);
+  const o=n%10;
+  let s=t===1?"じゅう":`${t}じゅう`;
+  if(o!==0)s+=`${o}`;
+  speak(s,onEnd);
+ }
+}
+</script>
+
+</body>
+</html>
